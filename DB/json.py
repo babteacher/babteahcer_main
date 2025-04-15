@@ -17,6 +17,7 @@ collection = db["youtube_recipes"]                 # 컬렉션 이름
 recipes = []
 for doc in collection.find():
     recipe = {
+        "id": str(doc.get("_id", "")),
         "title": doc.get("title", "제목 없음"),
         "ingredients": doc.get("ingredients", "재료 없음"),
         "steps": doc.get("text", "설명 없음").split('\n'),  # 요약 텍스트를 줄마다 나눔
