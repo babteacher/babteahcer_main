@@ -6,7 +6,6 @@ Created on Tue Apr  1 17:35:09 2025
 """
 
 # yt_video_scraper.py
-# 썸네일 사진 링크도 추가
 
 import re
 import requests
@@ -23,8 +22,8 @@ db = client[DB_NAME]
 collection = db[COLLECTION_NAME]
 
 # 검색할 키워드
-search_query = "자취생 레시피"
-max_results = 20
+search_query = "자취생 냉장고 레시피"
+max_results = 5
 
 # yt-dlp 옵션
 ydl_opts = {
@@ -67,7 +66,6 @@ with yt_dlp.YoutubeDL(ydl_opts) as ydl:
         upload_date = f"{upload_date[:4]}-{upload_date[4:6]}-{upload_date[6:]}" if upload_date != '날짜 없음' else upload_date
         video_thumbnail = video.get('thumbnail', '썸네일 없음')
         
-        
         # 자막 처리 - 오직 한국어만
         subtitles = video.get('subtitles', {})
         auto_captions = video.get('automatic_captions', {})
@@ -87,21 +85,19 @@ with yt_dlp.YoutubeDL(ydl_opts) as ydl:
                 response.raise_for_status()
                 clean_text = vtt_to_clean_txt(response.text)
                 
-                # MongoDB 저장 (중복 방지)
-                data = {
-                    "title": video_title,
-                    "url": video_url,
-                    "views": video_views,
-                    "upload_date": upload_date,
-                    "subtitle_text": clean_text,
-                    "img": video_thumbnail
-                }
-                
-                collection.update_one(
-                    {"$or": [{"title": video_title}, {"url": video_url}]},
-                    {"$set": data},
-                    upsert=True
-                )
-                print(f"✅ 저장 완료: {video_title}")
+                # 중복되지 않으면 데이터 삽입
+                if collection.count_documents({"$or": [{"title": video_title}, {"url": video_url}]}, limit=1) == 0:
+                    data = {
+                        "title": video_title,
+                        "url": video_url,
+                        "views": video_views,
+                        "upload_date": upload_date,
+                        "subtitle_text": clean_text,
+                        "img": video_thumbnail
+                    }
+                    collection.insert_one(data)
+                    print(f"✅ 저장 완료: {video_title}")
+                else:
+                    print(f"❌ 중복된 데이터: {video_title}")
             except requests.exceptions.RequestException as e:
                 print(f"⚠️ 자막 다운로드 실패: {video_title} - {e}")
