@@ -93,7 +93,6 @@ with yt_dlp.YoutubeDL(ydl_opts) as ydl:
                     "url": video_url,
                     "views": video_views,
                     "upload_date": upload_date,
-                    "subtitle_lang": 'ko',
                     "subtitle_text": clean_text,
                     "img": video_thumbnail
                 }
