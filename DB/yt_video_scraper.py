@@ -6,9 +6,12 @@ Created on Tue Apr  1 17:35:09 2025
 """
 
 # yt_video_scraper.py
-# 영어 자막 있을 시 출력안함
-# mongoDB 저장
-# 챗지피티 연결 후 레시피 데이터 수정하는 작업 필요
+# 썸네일 사진 링크도 추가
+
+import re
+import requests
+from pymongo import MongoClient
+import yt_dlp
 
 # MongoDB 설정
 MONGO_URI = "mongodb+srv://babteacher33:rlarlatls@babteacher.sriiv.mongodb.net/"
@@ -20,7 +23,7 @@ db = client[DB_NAME]
 collection = db[COLLECTION_NAME]
 
 # 검색할 키워드
-search_query = "다이어트 레시피"
+search_query = "자취생 레시피"
 max_results = 20
 
 # yt-dlp 옵션
@@ -62,6 +65,8 @@ with yt_dlp.YoutubeDL(ydl_opts) as ydl:
         video_views = video.get('view_count', '조회수 없음')
         upload_date = video.get('upload_date', '날짜 없음')
         upload_date = f"{upload_date[:4]}-{upload_date[4:6]}-{upload_date[6:]}" if upload_date != '날짜 없음' else upload_date
+        video_thumbnail = video.get('thumbnail', '썸네일 없음')
+        
         
         # 자막 처리 - 오직 한국어만
         subtitles = video.get('subtitles', {})
@@ -89,7 +94,8 @@ with yt_dlp.YoutubeDL(ydl_opts) as ydl:
                     "views": video_views,
                     "upload_date": upload_date,
                     "subtitle_lang": 'ko',
-                    "subtitle_text": clean_text
+                    "subtitle_text": clean_text,
+                    "img": video_thumbnail
                 }
                 
                 collection.update_one(
